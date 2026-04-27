@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 // ── Your app store / waitlist link ────────────────────────────────────────────
-const APP_LINK = "https://yourappstorelink.com";
+const APP_LINK = "";
 
 // ── Feature list ──────────────────────────────────────────────────────────────
 const FEATURES = [
@@ -112,7 +112,7 @@ export default function LandingPage() {
               className="text-zinc-100 text-base"
               style={{ fontFamily: "MartianMono_700Bold" }}
             >
-              GymTracker
+              Lifto-Gym-Tracker
             </Text>
           </View>
 
@@ -188,38 +188,6 @@ export default function LandingPage() {
             results than flashy features. Create workouts, log every set, review
             your history.
           </Text>
-
-          {/* CTAs */}
-          <View
-            className={`gap-4 ${isWide ? "flex-row" : "flex-col w-full"}`}
-          >
-            <TouchableOpacity
-              onPress={() => Linking.openURL(APP_LINK)}
-              className="bg-rose-600 rounded-2xl px-8 py-4 items-center"
-              activeOpacity={0.8}
-              style={isWide ? {} : {}}
-            >
-              <Text
-                className="text-white text-sm uppercase tracking-widest"
-                style={{ fontFamily: "MartianMono_700Bold" }}
-              >
-                Download Free
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.push("/(unauthenticated)/login")}
-              className="border border-zinc-800 rounded-2xl px-8 py-4 items-center"
-              activeOpacity={0.8}
-            >
-              <Text
-                className="text-zinc-400 text-sm uppercase tracking-widest"
-                style={{ fontFamily: "MartianMono_400Regular" }}
-              >
-                Log In →
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* ── DIVIDER ───────────────────────────────────────────────────────── */}
@@ -431,7 +399,7 @@ export default function LandingPage() {
               className="text-zinc-600 text-xs"
               style={{ fontFamily: "MartianMono_400Regular" }}
             >
-              GymTracker © {new Date().getFullYear()}
+              Lifto-Gym-Tracker © {new Date().getFullYear()}
             </Text>
           </View>
 

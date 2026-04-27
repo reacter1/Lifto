@@ -3,7 +3,6 @@ import { Platform } from "react-native";
 
 function getRedirectUrl() {
   if (Platform.OS === "web") {
-    // Uses current origin so it works on both localhost and production
     return `${window.location.origin}/auth/confirm`;
   }
   // Deep link for native
