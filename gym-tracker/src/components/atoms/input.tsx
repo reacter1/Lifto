@@ -25,32 +25,33 @@ export function Input({
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   return (
-    <View className="w-full gap-1.5">
-      {/* Label */}
+    <View className="w-full gap-2">
       {label && (
-        <Text className="text-text-muted text-sm font-medium ml-1">
+        <Text
+          className="text-zinc-500 text-xs uppercase tracking-widest ml-1"
+          style={{ fontFamily: "MartianMono_400Regular" }}
+        >
           {label}
         </Text>
       )}
 
-      {/* Input Row */}
       <View
         className={`
           flex-row items-center
-          bg-background-input border rounded-xl px-4
-          ${error ? "border-danger" : "border-border"}
+          bg-zinc-900 border rounded-2xl px-4
+          ${error ? "border-red-500" : "border-zinc-800"}
         `}
       >
         <TextInput
-          className="flex-1 text-text text-base py-4"
+          className="flex-1 text-zinc-100 text-sm py-4"
           placeholderTextColor="#52525b"
           secureTextEntry={isPassword && !isPasswordVisible}
           autoCapitalize="none"
           autoCorrect={false}
+          style={{ fontFamily: "MartianMono_400Regular" }}
           {...props}
         />
 
-        {/* Password toggle */}
         {isPassword && (
           <TouchableOpacity
             onPress={() => setIsPasswordVisible((prev) => !prev)}
@@ -58,21 +59,29 @@ export function Input({
           >
             <Ionicons
               name={isPasswordVisible ? "eye-off" : "eye"}
-              size={20}
-              color="#a1a1aa"
+              size={18}
+              color="#52525b"
             />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Error message */}
       {error && (
-        <Text className="text-danger text-xs ml-1">{error}</Text>
+        <Text
+          className="text-red-500 text-xs ml-1"
+          style={{ fontFamily: "MartianMono_400Regular" }}
+        >
+          {error}
+        </Text>
       )}
 
-      {/* Hint message */}
       {hint && !error && (
-        <Text className="text-text-subtle text-xs ml-1">{hint}</Text>
+        <Text
+          className="text-zinc-600 text-xs ml-1"
+          style={{ fontFamily: "MartianMono_400Regular" }}
+        >
+          {hint}
+        </Text>
       )}
     </View>
   );

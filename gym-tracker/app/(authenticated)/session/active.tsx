@@ -5,16 +5,25 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  AppState,
 } from "react-native";
 import { useRouter } from "expo-router";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  Easing,
+  FadeInDown,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/src/components/atoms/button";
 import { ActiveExercise } from "@/src/components/organisms/active-exercise";
 import { useActiveSession } from "@/src/hooks/use-active-session";
 
 export default function ActiveSessionScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const {
     sessionId,
     templateName,
@@ -25,40 +34,10 @@ export default function ActiveSessionScreen() {
     endSession,
   } = useActiveSession();
 
-  // ── Timer ──────────────────────────────────────────────────────────────────
   const [elapsed, setElapsed] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(Date.now());
-
-  useEffect(() => {
-    startTimeRef.current = Date.now();
-    timerRef.current = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
-  // ── Format Timer ───────────────────────────────────────────────────────────
-  function formatElapsed(seconds: number) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) {
-      return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    }
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  }
-
-  // ── Guard: Redirect if no active session ──────────────────────────────────
-  useEffect(() => {
-    if (!sessionId) {
-      router.replace("/(authenticated)/(tabs)");
-    }
-  }, [sessionId]);
 
   // ── Progress ───────────────────────────────────────────────────────────────
   const totalSets = exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
@@ -68,24 +47,56 @@ export default function ActiveSessionScreen() {
   );
   const progressPercent = totalSets > 0 ? completedSets / totalSets : 0;
 
-  // ── Finish Workout ─────────────────────────────────────────────────────────
+  // ── Animated progress bar ──────────────────────────────────────────────────
+  const progressWidth = useSharedValue(0);
+
+  useEffect(() => {
+    progressWidth.value = withTiming(progressPercent, {
+      duration: 500,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [progressPercent]);
+
+  const progressBarStyle = useAnimatedStyle(() => ({
+    width: `${progressWidth.value * 100}%`,
+  }));
+
+  // ── Timer ──────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+    timerRef.current = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  function formatElapsed(seconds: number) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  // ── Guard ──────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!sessionId) router.replace("/(authenticated)/(tabs)");
+  }, [sessionId]);
+
+  // ── Finish ─────────────────────────────────────────────────────────────────
   async function handleFinish() {
     const hasAnySetsCompleted = exercises.some((ex) =>
       ex.sets.some((s) => s.completed)
     );
 
     if (!hasAnySetsCompleted) {
-      Alert.alert(
-        "No Sets Logged",
-        "Complete at least one set before finishing.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("No Sets Logged", "Complete at least one set before finishing.");
       return;
     }
 
     Alert.alert(
       "Finish Workout?",
-      `You've completed ${completedSets} of ${totalSets} sets.`,
+      `${completedSets} of ${totalSets} sets completed.`,
       [
         { text: "Keep Going", style: "cancel" },
         {
@@ -107,86 +118,111 @@ export default function ActiveSessionScreen() {
     );
   }
 
-  // ── Cancel Workout ─────────────────────────────────────────────────────────
+  // ── Cancel ─────────────────────────────────────────────────────────────────
   function handleCancel() {
-    Alert.alert(
-      "Cancel Workout?",
-      "All your progress will be lost.",
-      [
-        { text: "Keep Going", style: "cancel" },
-        {
-          text: "Cancel Workout",
-          style: "destructive",
-          onPress: () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-            endSession();
-            router.replace("/(authenticated)/(tabs)");
-          },
+    Alert.alert("Cancel Workout?", "All progress will be lost.", [
+      { text: "Keep Going", style: "cancel" },
+      {
+        text: "Cancel",
+        style: "destructive",
+        onPress: () => {
+          if (timerRef.current) clearInterval(timerRef.current);
+          endSession();
+          router.replace("/(authenticated)/(tabs)");
         },
-      ]
-    );
+      },
+    ]);
   }
 
   if (!sessionId) return null;
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <View className="flex-1 bg-background">
-      {/* Sticky Header */}
-      <View className="px-6 pt-16 pb-4 bg-background border-b border-border">
-        <View className="flex-row items-center justify-between mb-3">
+    <View className="flex-1 bg-[#050507]">
+      {/* ── Sticky Header ───────────────────────────────────── */}
+      <View
+        style={{ paddingTop: insets.top + 16 }}
+        className="px-5 pb-4 bg-[#050507] border-b border-zinc-900"
+      >
+        <View className="flex-row items-center justify-between mb-4">
           {/* Cancel */}
           <TouchableOpacity
             onPress={handleCancel}
-            className="bg-background-card border border-border rounded-xl px-3 py-2"
+            className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2"
           >
-            <Text className="text-text-muted font-medium text-sm">Cancel</Text>
+            <Text
+              className="text-zinc-400 text-xs"
+              style={{ fontFamily: "MartianMono_400Regular" }}
+            >
+              Cancel
+            </Text>
           </TouchableOpacity>
 
           {/* Timer */}
           <View className="items-center">
-            <Text className="text-text text-2xl font-bold tabular-nums">
+            <Text
+              className="text-zinc-100 text-2xl tabular-nums"
+              style={{ fontFamily: "MartianMono_700Bold" }}
+            >
               {formatElapsed(elapsed)}
             </Text>
-            <Text className="text-text-muted text-xs">{templateName}</Text>
+            <Text
+              className="text-zinc-500 text-xs mt-0.5 uppercase tracking-widest"
+              style={{ fontFamily: "MartianMono_400Regular" }}
+            >
+              {templateName}
+            </Text>
           </View>
 
-          {/* Sets Badge */}
-          <View className="bg-primary/10 border border-primary/20 rounded-xl px-3 py-2">
-            <Text className="text-primary font-semibold text-sm">
+          {/* Sets count */}
+          <View className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
+            <Text
+              className="text-zinc-100 text-xs"
+              style={{ fontFamily: "MartianMono_700Bold" }}
+            >
               {completedSets}/{totalSets}
             </Text>
           </View>
         </View>
 
-        {/* Progress Bar */}
-        <View className="h-1.5 bg-background-input rounded-full overflow-hidden">
-          <View
-            className="h-full bg-primary rounded-full"
-            style={{ width: `${progressPercent * 100}%` }}
+        {/* ── Animated Progress Bar ───────────────────────── */}
+        <View className="h-1 bg-zinc-900 rounded-full overflow-hidden">
+          <Animated.View
+            style={[progressBarStyle, { height: "100%", borderRadius: 9999, backgroundColor: "#e11d48" }]}
           />
         </View>
       </View>
 
-      {/* Exercises */}
+      {/* ── Exercise List ────────────────────────────────────── */}
       <ScrollView
         className="flex-1"
-        contentContainerClassName="px-6 pt-6 pb-36"
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          paddingBottom: insets.bottom + 100,
+        }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {exercises.map((exercise) => (
-          <ActiveExercise
+        {exercises.map((exercise, index) => (
+          // ✅ Each exercise fades+slides up on mount, staggered by index
+          <Animated.View
             key={exercise.id}
-            exercise={exercise}
-            onUpdateSet={updateSet}
-            onCompleteSet={completeSet}
-          />
+            entering={FadeInDown.delay(index * 80).duration(400).springify()}
+          >
+            <ActiveExercise
+              exercise={exercise}
+              onUpdateSet={updateSet}
+              onCompleteSet={completeSet}
+            />
+          </Animated.View>
         ))}
       </ScrollView>
 
-      {/* Finish Button — Floating */}
-      <View className="absolute bottom-0 left-0 right-0 px-6 pb-10 pt-4 bg-background border-t border-border">
+      {/* ── Finish Button ────────────────────────────────────── */}
+      <View
+        style={{ paddingBottom: insets.bottom + 16 }}
+        className="px-5 pt-4 bg-[#050507] border-t border-zinc-900"
+      >
         <Button
           label={isSaving ? "Saving..." : "Finish Workout 💪"}
           onPress={handleFinish}

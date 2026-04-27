@@ -4,6 +4,11 @@ import {
   ActivityIndicator,
   TouchableOpacityProps,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
 
 type ButtonVariant = "primary" | "outline" | "ghost" | "danger";
 
@@ -16,20 +21,20 @@ type ButtonProps = TouchableOpacityProps & {
 
 const variantStyles: Record<ButtonVariant, { container: string; text: string }> = {
   primary: {
-    container: "bg-primary active:bg-primary-dark",
-    text: "text-white font-semibold",
+    container: "bg-rose-600 active:bg-rose-700",
+    text: "text-white",
   },
   outline: {
-    container: "border border-primary bg-transparent active:bg-primary/10",
-    text: "text-primary font-semibold",
+    container: "border border-rose-600 bg-transparent",
+    text: "text-rose-500",
   },
   ghost: {
-    container: "bg-transparent active:bg-white/10",
-    text: "text-text-muted font-medium",
+    container: "bg-transparent",
+    text: "text-zinc-400",
   },
   danger: {
-    container: "bg-danger active:bg-red-700",
-    text: "text-white font-semibold",
+    container: "bg-red-600",
+    text: "text-white",
   },
 };
 
@@ -39,28 +44,52 @@ export function Button({
   isLoading = false,
   fullWidth = true,
   disabled,
+  onPress,
   ...props
 }: ButtonProps) {
   const styles = variantStyles[variant];
   const isDisabled = disabled || isLoading;
 
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  function handlePressIn() {
+    scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
+  }
+
+  function handlePressOut() {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  }
+
   return (
-    <TouchableOpacity
-      className={`
-        ${styles.container}
-        ${fullWidth ? "w-full" : ""}
-        ${isDisabled ? "opacity-50" : ""}
-        rounded-xl px-6 py-4 items-center justify-center flex-row gap-2
-      `}
-      disabled={isDisabled}
-      activeOpacity={0.8}
-      {...props}
-    >
-      {isLoading ? (
-        <ActivityIndicator size="small" color="white" />
-      ) : (
-        <Text className={`${styles.text} text-base`}>{label}</Text>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={[animatedStyle, fullWidth && { width: "100%" }]}>
+      <TouchableOpacity
+        className={`
+          ${styles.container}
+          ${isDisabled ? "opacity-40" : ""}
+          rounded-2xl px-6 py-4 items-center justify-center
+        `}
+        disabled={isDisabled}
+        activeOpacity={1}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        {...props}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color="white" />
+        ) : (
+          <Text
+            className={`${styles.text} text-sm tracking-widest uppercase`}
+            style={{ fontFamily: "MartianMono_700Bold" }}
+          >
+            {label}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 }

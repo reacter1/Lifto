@@ -1,12 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/src/components/atoms/button";
 import { ExerciseCard } from "@/src/components/molecules/exercise-card";
@@ -140,11 +135,12 @@ export default function WorkoutDetailScreen() {
         ) : (
           <View className="gap-3">
             {exercises.map((exercise, index) => (
-              <ExerciseCard
+              <Animated.View
                 key={exercise.id}
-                exercise={exercise}
-                index={index}
-              />
+                entering={FadeInDown.delay(index * 60).duration(400).springify()}
+              >
+                <ExerciseCard exercise={exercise} index={index} />
+              </Animated.View>
             ))}
           </View>
         )}
@@ -153,7 +149,7 @@ export default function WorkoutDetailScreen() {
       {/* Start Button — Floating at bottom */}
       <View className="absolute bottom-0 left-0 right-0 px-6 pb-10 pt-4 bg-background border-t border-border">
         <Button
-          label="Start Workout 💪"
+          label="Start Workout"
           onPress={handleStartWorkout}
           isLoading={isStarting}
         />

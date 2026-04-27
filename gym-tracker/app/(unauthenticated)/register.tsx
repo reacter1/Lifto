@@ -8,12 +8,14 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/src/components/atoms/button";
 import { Input } from "@/src/components/atoms/input";
 import { signUp } from "@/src/lib/auth/auth-helpers";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,77 +27,78 @@ export default function RegisterScreen() {
     confirmPassword?: string;
   }>({});
 
-  // ── Validation ──────────────────────────────────────────────────────────────
   function validate() {
     const newErrors: typeof errors = {};
-
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Enter a valid email address";
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
+    if (!email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Enter a valid email";
+    if (!password) newErrors.password = "Password is required";
+    else if (password.length < 6) newErrors.password = "At least 6 characters";
+    if (!confirmPassword) newErrors.confirmPassword = "Please confirm your password";
+    else if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
   async function handleRegister() {
     if (!validate()) return;
-
     try {
       setIsLoading(true);
       await signUp(email, password);
       Alert.alert(
-        "Account Created! 🎉",
+        "Account Created 🎉",
         "Check your email to confirm your account, then log in.",
-        [{ text: "Go to Login", onPress: () => router.replace("/(unauthenticated)/login") }]
+        [{ text: "Log In", onPress: () => router.replace("/(unauthenticated)/login") }]
       );
     } catch (error: any) {
-      Alert.alert(
-        "Sign Up Failed",
-        error?.message ?? "Something went wrong. Please try again."
-      );
+      Alert.alert("Sign Up Failed", error?.message ?? "Something went wrong.");
     } finally {
       setIsLoading(false);
     }
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-[#050507]">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         <ScrollView
-          contentContainerClassName="flex-grow justify-center px-6 py-12"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            paddingHorizontal: 24,
+            paddingTop: insets.top + 20,
+            paddingBottom: insets.bottom + 20,
+          }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <View className="mb-10">
-            <Text className="text-4xl font-bold text-text mb-2">
-              Create Account 🏋️
+          {/* ── Brand ─────────────────────────────────────── */}
+          <View className="mb-12">
+            <View className="w-14 h-14 rounded-2xl bg-rose-600 items-center justify-center mb-6">
+              <Text
+                className="text-white text-2xl"
+                style={{ fontFamily: "MartianMono_700Bold" }}
+              >
+                G
+              </Text>
+            </View>
+            <Text
+              className="text-zinc-50 text-3xl mb-2"
+              style={{ fontFamily: "MartianMono_700Bold" }}
+            >
+              Create account
             </Text>
-            <Text className="text-text-muted text-base">
-              Start tracking your gains today
+            <Text
+              className="text-zinc-500 text-xs uppercase tracking-widest"
+              style={{ fontFamily: "MartianMono_400Regular" }}
+            >
+              Start tracking your gains
             </Text>
           </View>
 
-          {/* Form */}
-          <View className="gap-4">
+          {/* ── Form ──────────────────────────────────────── */}
+          <View className="gap-4 mb-6">
             <Input
               label="Email"
               placeholder="you@example.com"
@@ -107,7 +110,6 @@ export default function RegisterScreen() {
               keyboardType="email-address"
               error={errors.email}
             />
-
             <Input
               label="Password"
               placeholder="••••••••"
@@ -121,7 +123,6 @@ export default function RegisterScreen() {
               hint="At least 6 characters"
               error={errors.password}
             />
-
             <Input
               label="Confirm Password"
               placeholder="••••••••"
@@ -134,22 +135,35 @@ export default function RegisterScreen() {
               isPassword
               error={errors.confirmPassword}
             />
-
-            {/* Register Button */}
-            <View className="mt-2">
-              <Button
-                label="Create Account"
-                onPress={handleRegister}
-                isLoading={isLoading}
-              />
-            </View>
           </View>
 
-          {/* Back to Login */}
-          <View className="flex-row justify-center items-center mt-8 gap-1">
-            <Text className="text-text-muted">Already have an account?</Text>
+          <Button
+            label="Create Account"
+            onPress={handleRegister}
+            isLoading={isLoading}
+          />
+
+          {/* ── Login Link ────────────────────────────────── */}
+          <View className="flex-row items-center my-8">
+            <View className="flex-1 h-px bg-zinc-800" />
+            <Text
+              className="text-zinc-600 text-xs mx-4"
+              style={{ fontFamily: "MartianMono_400Regular" }}
+            >
+              or
+            </Text>
+            <View className="flex-1 h-px bg-zinc-800" />
+          </View>
+
+          <View className="flex-row justify-center items-center gap-2">
+            <Text
+              className="text-zinc-500 text-xs"
+              style={{ fontFamily: "MartianMono_400Regular" }}
+            >
+              Have an account?
+            </Text>
             <Button
-              label="Log In"
+              label="Log in"
               variant="ghost"
               fullWidth={false}
               onPress={() => router.replace("/(unauthenticated)/login")}

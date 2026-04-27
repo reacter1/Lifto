@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-export default function UnauthenticatedLayout() {
+export default function MarketingLayout() {
   return (
     <Stack
       screenOptions={{
