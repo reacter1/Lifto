@@ -20,11 +20,7 @@
       },
       "package": "com.yourname.gymtracker"
     },
-    "plugins": [
-      "expo-router",
-      "expo-secure-store",
-      "expo-font"
-    ],
+    "plugins": ["expo-router", "expo-secure-store", "expo-font"],
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -32,6 +28,10 @@
     },
     "experiments": {
       "typedRoutes": true
+    },
+    "scripts": {
+      "start": "expo start",
+      "build:web": "expo export --platform web"
     }
   }
 }
