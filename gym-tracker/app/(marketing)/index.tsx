@@ -112,7 +112,7 @@ export default function LandingPage() {
                     {/* Nav Links */}
                     {isWide && (
                         <View className="flex-row items-center gap-8">
-                            {["Features", "How it works"].map((item) => (
+                            {["Features", "How it works", "Themes"].map((item) => (
                                 <Text
                                     key={item}
                                     className="text-zinc-400 text-xs uppercase tracking-widest cursor-pointer hover:text-zinc-100"

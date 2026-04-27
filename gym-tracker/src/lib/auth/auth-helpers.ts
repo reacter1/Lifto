@@ -1,13 +1,4 @@
 import { supabase } from "@/src/lib/supabase/supabase-client";
-import { Platform } from "react-native";
-
-function getRedirectUrl() {
-  if (Platform.OS === "web") {
-    return `${window.location.origin}/auth/confirm`;
-  }
-  // Deep link for native
-  return "gymtracker://auth/confirm";
-}
 
 // ─── Sign Up ──────────────────────────────────────────────────────────────────
 export async function signUp(email: string, password: string) {
@@ -15,7 +6,7 @@ export async function signUp(email: string, password: string) {
     email: email.trim().toLowerCase(),
     password,
     options: {
-      emailRedirectTo: getRedirectUrl(),
+      emailRedirectTo: `${process.env.EXPO_PUBLIC_SITE_URL}/auth/confirm`,
     },
   });
 
